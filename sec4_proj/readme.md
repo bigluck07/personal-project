@@ -79,11 +79,11 @@
     
 - 리뷰종류 별 총 단어의 개수
   - Negative_Review
-    - ![image](https://user-images.githubusercontent.com/73811590/124109448-1a8df480-daa2-11eb-8af1-77e778df4084.png)
+    ![image](https://user-images.githubusercontent.com/73811590/124109448-1a8df480-daa2-11eb-8af1-77e778df4084.png)
  
  
   - Positive_Review
-    - ![image](https://user-images.githubusercontent.com/73811590/124109463-1e217b80-daa2-11eb-89a1-181f1b66b0d5.png)
+    ![image](https://user-images.githubusercontent.com/73811590/124109463-1e217b80-daa2-11eb-89a1-181f1b66b0d5.png)
 
 
 ## 🖥️ Model
