@@ -25,6 +25,7 @@
 ### 가설
 - 호텔을 이용한 고객들의 리뷰를 분석하여 호텔추천 서비스를 이용하려는 고객들의 니즈에 맞춰서 호텔을 추천하여 고객의 편리성을 높힐 수 있을 것다
 - 리뷰들을 자연어처리를 통해 분석하여 k-nn모델을 통해 가장 근접한 문서를 찾고 해당 문서에 해당하는 호텔의 이름을 뽑아 출력할 수 있을것이다.
+- 추가적으로 서비스에 등록된 호텔 또한 회사의 고객이라 생각이 되기에, 각 호텔별 받은 리뷰의 상위 10개의 단어들을 제공할 수 도 있을 것이다.(일단은 전체호텔의 10개 단어만 추렸습니다.)
 
 ## 🔠 Columns
 - 특성설명
@@ -78,39 +79,144 @@
   - Positive_Review
     <img width="361" alt="스크린샷 2021-07-01 오후 7 16 49" src="https://user-images.githubusercontent.com/73811590/124108127-e403aa00-daa0-11eb-9aec-29555a5dfbc3.png">
     
-- 리뷰
+- 리뷰종류 별 총 단어의 개수
+  - Negative_Review
+    - ![image](https://user-images.githubusercontent.com/73811590/124109448-1a8df480-daa2-11eb-8af1-77e778df4084.png)
+ 
+ 
+  - Positive_Review
+    - ![image](https://user-images.githubusercontent.com/73811590/124109463-1e217b80-daa2-11eb-89a1-181f1b66b0d5.png)
+
 
 ## 🖥️ Model
+-  Tf-IDF
 ```
-LabelEncoder() # 카테고리들의 범주화
-Ensemble_pipe = make_pipeline(
-    TargetEncoder(),
-    SimpleImputer(),
-    StandardScaler(), 
-    RandomForestClassifier(random_state=2)
-)
-RandomizedSearchCV() # 최적의 파라미터값을 찾음
+# spacy tokenizer 함수
+def tokenize(document):
+    
+    doc = nlp(document)
+    # punctuations: !"#$%&'()*+,-./:;<=>?@[\]^_`{|}~
+    return [token.lemma_.strip() for token in doc if (token.is_stop != True) and (token.is_punct != True) and (token.is_alpha == True)]
+    
+# Tf-IDF
+N_tfidf = TfidfVectorizer(stop_words='english'
+                        ,tokenizer=tokenize
+                        ,ngram_range=(1,2)
+                        ,max_df=.7
+                        ,min_df=3
+                        ,max_features = 20000
+                       )
+P_tfidf = TfidfVectorizer(stop_words='english'
+                        ,tokenizer=tokenize
+                        ,ngram_range=(1,2)
+                        ,max_df=.7
+                        ,min_df=3
+                        ,max_features = 20000
+                       )
+Negative_Review_dtm = N_tfidf.fit_transform(Negative_Review)
+Negative_Review_dtm = pd.DataFrame(Negative_Review_dtm.todense(), columns=N_tfidf.get_feature_names())
+print(Negative_Review_dtm.head())
+
+Positive_Review_dtm = P_tfidf.fit_transform(Positive_Review)
+Positive_Review_dtm = pd.DataFrame(Positive_Review_dtm.todense(), columns=P_tfidf.get_feature_names())
+print(Positive_Review_dtm.head())
 ```
 
+- 유사도를 이용한 문서검색(NearestNeighbor (K-NN, K-최근접 이웃))
+```
+# NearestNeighbor (K-NN, K-최근접 이웃)
+from sklearn.neighbors import NearestNeighbors
 
-# 💻 Heroku
-- 해당 레포의 헤로쿠 링크입니다.
-- https://sec3-proj-tintin.herokuapp.com/
+# dtm을 사용히 NN 모델을 학습시킵니다. (디폴트)최근접 5 이웃.
+Negative_Review_nn = NearestNeighbors(n_neighbors=5, algorithm='kd_tree')
+Negative_Review_nn.fit(Negative_Review_dtm)
 
-# 🏠 Home
-- 해당 웹의 서비스를 설명하고, 사용할 수 있도록 만들어진 기본 페이지입니다.
+Positive_Review_nn = NearestNeighbors(n_neighbors=5, algorithm='kd_tree')
+Positive_Review_nn.fit(Positive_Review_dtm)
+```
 
-# 🧍 User
-- 사용자가 자신의 정보를 입력하여 데이터베이스에 저장하는 기능을 가진 페이지입니다.
-- 사용자는 자신의 정보를 입력 후, 데이터베이스에 저장하여 Predict페이지에서 자신의 결과값을 확인할 수 있습니다.
-- 결과값 확인후 User페이지로 돌아와서 자신의 정보를 삭제할 수 있습니다.
+### 추가기능
+```
+# ['travel_perpos']을 통해서 해당 유형에서 가장 많이 예약된 상위 5개의 호텔 알려주기
+def top5_hotel_by_travel_perpos(data, travel_perpos):
+  travel_perpos_ls = data['travel_perpos'].unique()
+  hotel_list = data['Hotel_Name'].unique()
+  dic = {}
+  for i in hotel_list:
+    s = data[data['Hotel_Name']==i]['travel_perpos']=='travel_perpos'
+    dic[i]=s.count()
+  top5 = sorted(dic.items(), key=lambda x: x[1], reverse=True)[0:5]
+  print(f"입력된 숙박목적은 '{travel_perpos}'이며, 해당 목적으로 가장많이 이용된 상위5개 호텔과 이용자 수 는 다음과 같습니다. ")
+  return top5
 
-# 💳 Predict
-- 사용자가 자신의 이름을 입력하여 데이터베이스의 정보를 불러온 후, 카드의종류를 예측하는 기능을 가능 페이지입니다.
-- 사용자는 자신의 이름을 입력하고 자신이 발급받게될 카드의 종류의 예상, 즉 결과값을 확인할 수 있습니다.
-- 이후 User페이지로 돌아가 자신의 정보를 삭제할 수 있습니다.
+# 사용자의 조건에 따라 호텔 추천하기
+def kneighbors(data, Negative, Positive):
+  hotel_list = data['Hotel_Name'].unique()
+  test_N = N_tfidf.transform(Negative)
+  test_P = P_tfidf.transform(Positive)
+  Negative_kneighbors=Negative_Review_nn.kneighbors(test_N.todense())[1][0]
+  Positive_kneighbors=Positive_Review_nn.kneighbors(test_P.todense())[1][0]
+  print(f"입력된 싫어하는 호텔조건은\n {Negative}\n이며, 입력된 조건과 비슷한 리뷰가 있는 호텔은 다음과 같습니다.")
+  for i in hotel_list[Negative_kneighbors]:
+    print(i)
+  print("\n")
+  print(f"입력된 선호하는 호텔조건은\n {Positive}\n이며, 입력된 조건과 비슷한 리뷰가 있는 호텔은 다음과 같습니다.")
+  for i in hotel_list[Positive_kneighbors]:
+    print(i)
+  return
+```
 
-# 🖼️ Schema
-- 해당 데이터베이스에서 사용되는 테이블의 스키마입니다.
-<img width="359" alt="스크린샷 2021-06-02 오후 12 07 16" src="https://user-images.githubusercontent.com/73811590/120418226-14b9cc00-c39b-11eb-8bb7-6e6cf6360bb0.png">
+# 모델 성능 확인
+이용자1
+- 여행목적: 'solotraveler'
+- 싫어하는 호텔조건: 'bug, nosie, unkind staff'
+- 좋아하는 호텔조건: 'nice step, good breakfast and pool'
 
+- 조건 입력
+
+```
+user1 = {
+    'travel_perpos':input("travel_perpos?:"),
+    'n1':[input("negative_r?: ")],
+    'p1':[input("positive_r?: ")]
+    }
+ >>> solotraveler
+ >>> bug, nosie, unkind staff
+ >>> nice step, good breakfast and pool
+```
+
+- 여행목적에 따른 상위 호텔 5개
+```
+top5_hotel_by_travel_perpos(df, user1['travel_perpos'])
+```
+ - 입력된 숙박목적은 'solotraveler'이며, 해당 목적으로 가장많이 이용된 상위5개 호텔과 이용자 수 는 다음과 같습니다. 
+[('Eurostars Grand Marina Hotel GL', 1082),
+ ('Catalonia Atenas', 1061),
+ ('Catalonia Plaza Catalunya', 964),
+ ('Catalonia Barcelona Plaza', 932),
+ ('Barcelona Princess', 897)]
+ 
+ 
+- 제시한 조건에 따른 추천호텔 및 비추천 호텔
+```
+kneighbors(df, user1['n1'], user1['p1'])
+```
+  - 입력된 싫어하는 호텔조건은
+ ['bug, nosie, unkind staff']
+이며, 입력된 조건과 비슷한 리뷰가 있는 호텔은 다음과 같습니다.
+  - Catalonia Passeig de Gr cia 4 Sup
+  - Eurohotel Diagonal Port
+  - H10 Port Vell 4 Sup
+  - Ilunion Bel Art
+  - Hotel Omm
+
+
+  - 입력된 선호하는 호텔조건은
+ ['nice step, good breakfast, pool']
+이며, 입력된 조건과 비슷한 리뷰가 있는 호텔은 다음과 같습니다.
+
+  - Catalonia Barcelona Plaza
+  - Catalonia Ramblas 4 Sup
+  - Catalonia Park Putxet
+  - Novotel Barcelona City
+  - Grand Hotel Central
