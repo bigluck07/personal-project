@@ -190,11 +190,11 @@ user1 = {
 top5_hotel_by_travel_perpos(df, user1['travel_perpos'])
 ```
  - 입력된 숙박목적은 'solotraveler'이며, 해당 목적으로 가장많이 이용된 상위5개 호텔과 이용자 수 는 다음과 같습니다. 
-  - [('Eurostars Grand Marina Hotel GL', 1082),
-  - ('Catalonia Atenas', 1061),
-  - ('Catalonia Plaza Catalunya', 964),
-  - ('Catalonia Barcelona Plaza', 932),
-  - ('Barcelona Princess', 897)]
+    - [('Eurostars Grand Marina Hotel GL', 1082),
+    - ('Catalonia Atenas', 1061),
+    - ('Catalonia Plaza Catalunya', 964),
+    - ('Catalonia Barcelona Plaza', 932),
+    - ('Barcelona Princess', 897)]
  
  
 - 제시한 조건에 따른 추천호텔 및 비추천 호텔
