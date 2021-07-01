@@ -73,16 +73,23 @@
 ## 데이터 분석 
 - 전체호텔들의 리뷰들을 분석하여 상위 10개의 단어를 선정함
   - Negative_Review
+  
     <img width="351" alt="스크린샷 2021-07-01 오후 7 16 26" src="https://user-images.githubusercontent.com/73811590/124108080-d64e2480-daa0-11eb-9e19-3eb73d53b934.png">
+    
   - Positive_Review
+  
     <img width="361" alt="스크린샷 2021-07-01 오후 7 16 49" src="https://user-images.githubusercontent.com/73811590/124108127-e403aa00-daa0-11eb-9aec-29555a5dfbc3.png">
     
 - 리뷰종류 별 총 단어의 개수
   - Negative_Review
+
+
     ![image](https://user-images.githubusercontent.com/73811590/124109448-1a8df480-daa2-11eb-8af1-77e778df4084.png)
  
  
   - Positive_Review
+
+
     ![image](https://user-images.githubusercontent.com/73811590/124109463-1e217b80-daa2-11eb-89a1-181f1b66b0d5.png)
 
 
